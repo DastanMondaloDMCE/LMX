@@ -1,143 +1,100 @@
+import React, { useState, useEffect } from 'react';
+import { ArrowRight, ChevronDown, MousePointer2 } from 'lucide-react';
 
-import React, { useRef } from 'react';
-import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
-import { Button } from './ui/Button';
+interface HeroProps {
+  onInquiryOpen: () => void;
+}
 
-export const Hero: React.FC<{ onInquiryOpen?: () => void }> = ({ onInquiryOpen }) => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
+export const Hero: React.FC<HeroProps> = ({ onInquiryOpen }) => {
+  const [isMounted, setIsMounted] = useState(false);
 
-  const mouseXSpring = useSpring(x, { stiffness: 150, damping: 20 });
-  const mouseYSpring = useSpring(y, { stiffness: 150, damping: 20 });
+  useEffect(() => {
+    const timer = setTimeout(() => setIsMounted(true), 100);
+    return () => clearTimeout(timer);
+  }, []);
 
-  const rotateX = useTransform(mouseYSpring, [-0.5, 0.5], ["4deg", "-4deg"]);
-  const rotateY = useTransform(mouseXSpring, [-0.5, 0.5], ["-4deg", "4deg"]);
-  const shimmerX = useTransform(mouseXSpring, [-0.5, 0.5], ["-5%", "5%"]);
-
-  const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
-    if (!containerRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
-    const xPct = (event.clientX - rect.left) / rect.width - 0.5;
-    const yPct = (event.clientY - rect.top) / rect.height - 0.5;
-    x.set(xPct);
-    y.set(yPct);
-  };
-
-  const handleMouseLeave = () => {
-    x.set(0);
-    y.set(0);
+  // Helper for staggered animations
+  const getDelayClass = (delay: number) => {
+    return isMounted 
+      ? `opacity-100 translate-y-0 transition-all duration-1000 ease-out delay-[${delay}ms]` 
+      : 'opacity-0 translate-y-10';
   };
 
   return (
-    <section 
-      ref={containerRef}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      className="relative min-h-screen flex items-center justify-center px-4 md:px-6 overflow-hidden bg-charcoal perspective-3d"
-    >
-      {/* Background Ambience - Monochromatic */}
-      <div className="absolute inset-0 z-0 flex items-center justify-center pointer-events-none">
-        <motion.div
-          animate={{ opacity: [0.05, 0.1, 0.05], scale: [1, 1.05, 1] }}
-          transition={{ duration: 10, repeat: Infinity }}
-          className="w-[1200px] h-[1200px] bg-white/5 rounded-full blur-[150px]"
-        />
-      </div>
-
-      {/* Floating System Status Micro-UI */}
-      <div className="absolute top-32 left-12 hidden xl:block pointer-events-none opacity-40">
-        <div className="flex flex-col gap-6">
-          {[
-            { label: 'Latency', val: '12ms', color: 'bg-white' },
-            { label: 'Active Nodes', val: '1,402', color: 'bg-white' },
-            { label: 'Security', val: 'Lvl 4', color: 'bg-white' }
-          ].map((item, i) => (
-            <motion.div 
-              key={item.label}
-              initial={{ opacity: 0, x: -50 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 1 + i * 0.2 }}
-              className="flex items-center gap-4 border-l border-white/10 pl-4 py-1"
-            >
-              <div className={`w-1 h-1 ${item.color} rounded-full animate-pulse`}></div>
-              <div>
-                <p className="text-mono text-[8px] uppercase tracking-widest text-white/40">{item.label}</p>
-                <p className="text-mono text-[10px] font-medium text-white">{item.val}</p>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-
-      <motion.div
-        style={{ rotateX, rotateY }}
-        className="relative z-10 max-w-7xl mx-auto text-center px-4"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 1.5 }}
+    <div className="flex flex-col items-start justify-center max-w-6xl relative z-10">
+      {/* Availability Badge */}
+      <div 
+        className={`mb-8 inline-flex items-center gap-3 px-4 py-2 rounded-full border border-blue-500/20 bg-blue-900/10 backdrop-blur-md text-blue-300 text-[10px] font-bold tracking-[0.2em] uppercase transition-all duration-1000 ease-out ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
       >
-        <motion.div 
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.5, duration: 1 }}
-          className="mb-8 md:mb-12"
-        >
-          <span className="inline-flex items-center gap-3 py-2 px-6 md:px-8 rounded-full border border-white/5 bg-white/[0.02] text-[8px] md:text-[10px] font-bold tracking-[0.3em] md:tracking-[0.5em] text-metallic uppercase backdrop-blur-sm">
-            <span className="w-1.5 h-1.5 bg-white rounded-full animate-ping"></span>
-            Global Operations Active • 2026
-          </span>
-        </motion.div>
-
-        <motion.h1
-          initial={{ scale: 0.95, opacity: 0, y: 30 }}
-          animate={{ scale: 1, opacity: 1, y: 0 }}
-          transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1] }}
-          className="text-4xl sm:text-6xl md:text-9xl font-display font-bold uppercase tracking-tighter leading-tight md:leading-none mb-8 md:mb-10 text-transparent bg-clip-text bg-gradient-to-b from-white via-white to-neutral-700"
-          style={{ x: shimmerX }}
-        >
-          BUILDING <br className="hidden md:block" /> DIGITAL EMPIRES
-        </motion.h1>
-
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 0.6 }}
-          transition={{ delay: 1, duration: 2 }}
-          className="max-w-2xl mx-auto text-base md:text-2xl text-gray-400 mb-12 md:mb-16 font-light leading-relaxed italic"
-        >
-          Strategic engineering for the world's most sophisticated corporate entities. 
-          Architecting digital legacy through technological precision.
-        </motion.p>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1.2, duration: 1 }}
-          className="flex flex-col sm:flex-row items-center justify-center gap-6 md:gap-10"
-        >
-          <Button
-            onClick={onInquiryOpen}
-            size="lg"
-            className="w-full sm:w-auto bg-white text-black hover:bg-neutral-200 hover:text-black rounded-none border border-white text-[10px] md:text-sm"
-          >
-            Initiate Consultation
-          </Button>
-          <Button
-            variant="outline"
-            size="lg"
-            className="w-full sm:w-auto rounded-none border-white/10 hover:border-white/50 backdrop-blur-md text-[10px] md:text-sm"
-            onClick={() => window.scrollTo({ top: window.innerHeight, behavior: 'smooth' })}
-          >
-            Review Framework
-          </Button>
-        </motion.div>
-      </motion.div>
-
-      {/* Grid Scan Animation Overlay */}
-      <div className="absolute inset-0 pointer-events-none opacity-[0.03]">
-        <div className="absolute w-full h-[1px] bg-white animate-scan"></div>
+        <span className="relative flex h-2 w-2">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+        </span>
+        Available for 2024 Commissions
       </div>
-    </section>
+      
+      {/* Main Heading */}
+      <h1 className="text-7xl md:text-9xl lg:text-[10rem] font-bold font-serif leading-[0.85] mb-10 tracking-tighter mix-blend-difference">
+        <span 
+          className={`block bg-clip-text text-transparent bg-gradient-to-b from-white via-white to-gray-400 transition-all duration-1000 ease-out delay-100 ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
+        >
+          DMCE
+        </span>
+        <span 
+          className={`block text-4xl md:text-6xl lg:text-7xl mt-4 text-white font-sans font-light tracking-tight transition-all duration-1000 ease-out delay-200 ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
+        >
+          Digital Masterpiece
+        </span>
+        <span 
+          className={`block text-4xl md:text-6xl lg:text-7xl text-gray-500 font-sans font-light tracking-tight ml-2 md:ml-24 transition-all duration-1000 ease-out delay-300 ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
+        >
+          Creative Engineering.
+        </span>
+      </h1>
+
+      {/* Description */}
+      <div 
+        className={`flex flex-col md:flex-row gap-12 items-start transition-all duration-1000 ease-out delay-500 ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
+      >
+        <p className="text-lg md:text-xl text-gray-400 max-w-xl leading-relaxed border-l border-blue-500/50 pl-6">
+          Defining the intersection of <span className="text-white font-medium">aesthetic excellence</span> and <span className="text-white font-medium">engineering precision</span>. 
+          We are a premier digital studio delivering high-performance web applications, 
+          AI-integrated systems, and award-winning spatial interfaces.
+        </p>
+      </div>
+
+      {/* CTA Buttons */}
+      <div 
+        className={`flex flex-col sm:flex-row gap-6 mt-16 transition-all duration-1000 ease-out delay-700 ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
+      >
+        <a 
+          href="#projects" 
+          className="group relative inline-flex items-center justify-center px-8 py-4 bg-white text-black font-bold text-sm rounded-full overflow-hidden transition-all hover:scale-105 hover:shadow-[0_0_40px_rgba(255,255,255,0.3)]"
+        >
+          <span className="relative z-10 flex items-center">
+            Explore Portfolio <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
+          </span>
+          <div className="absolute inset-0 bg-gray-200 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300"></div>
+        </a>
+        
+        <button
+          onClick={onInquiryOpen}
+          className="group inline-flex items-center justify-center px-8 py-4 bg-transparent border border-white/20 text-white font-bold text-sm rounded-full hover:bg-white/5 transition-colors hover:border-white/40"
+        >
+          <span className="mr-2 opacity-0 group-hover:opacity-100 transition-opacity -ml-6 group-hover:ml-0 duration-300">
+            <MousePointer2 size={14} />
+          </span>
+          Initiate Contact
+        </button>
+      </div>
+
+      {/* Scroll Indicator */}
+      <div className={`absolute -bottom-32 left-0 w-full flex flex-col items-center transition-all duration-1000 delay-[1200ms] ${isMounted ? 'opacity-100' : 'opacity-0'}`}>
+        <span className="text-[10px] uppercase tracking-widest text-gray-600 mb-2">Scroll</span>
+        <a href="#about" className="text-white hover:text-blue-400 transition-colors animate-bounce p-2 border border-white/10 rounded-full">
+          <ChevronDown size={20} />
+        </a>
+      </div>
+    </div>
   );
 };
